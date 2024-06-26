@@ -16,6 +16,7 @@ double sell_price_deviation = 0.00106; // Increase to move away from price
 int spread_range_min = 1;
 int spread_range_max = 30;
 
+//--- Initialise global variables
 double buy_price_HL;
 double sell_price_HL;
 
@@ -68,7 +69,7 @@ void OnTick()
     int total_active_trades = PositionsTotal();
     Print("total_active_trades: ", total_active_trades);
 
-    //--- This checks the condition of when to make a trade. The condition of placing the trade is when the current time is between the trigger time range
+    //--- Define the condition of when to make a mark the buy and sell levels on the chart.
     if (current_time_seconds >= trigger_start_time_seconds && current_time_seconds <= trigger_end_time_seconds)
     {
 
@@ -90,7 +91,7 @@ void OnTick()
     double current_bid_price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
     double current_ask_price = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
 
-    //--- Round the current bid and ask price to 5 decimal points
+    //--- Round the current bid and ask price to it's correct decimal place
     current_bid_price = NormalizeDouble(current_bid_price, _Digits);
     Print("current_bid_price: ", current_bid_price);
 
@@ -101,38 +102,35 @@ void OnTick()
     long current_spread = SymbolInfoInteger(Symbol(), SYMBOL_SPREAD);
     Print("current_spread: ", current_spread);
 
+    //--- Lets you know if current bid price is above the marked buy level. Set to false by default
+    is_above_buy_price_lvl = false;
+
     //--- Check if current bid price is above buy price level
     if (current_bid_price > buy_price_HL && buy_price_HL != NULL)
     {
         is_above_buy_price_lvl = true;
     }
-    else
-    {
-        is_above_buy_price_lvl = false;
-    }
 
     Print("is_above_buy_price_lvl: ", is_above_buy_price_lvl);
+
+    //--- Lets you know if current bid price is below the marked sell level. Set to false by default
+    is_below_sell_price_lvl = false;
 
     //--- Check if current bid price is below sell price level
     if (current_bid_price < sell_price_HL && sell_price_HL != NULL)
     {
         is_below_sell_price_lvl = true;
     }
-    else
-    {
-        is_below_sell_price_lvl = false;
-    }
 
     Print("is_below_sell_price_lvl: ", is_below_sell_price_lvl);
+
+    //--- Lets you know if current spread is in the spread range. Set to false by default
+    is_in_spread_range = false;
 
     //--- Check if the current spread is within the spread range
     if (current_spread >= spread_range_min && current_spread <= spread_range_max)
     {
         is_in_spread_range = true;
-    }
-    else
-    {
-        is_in_spread_range = false;
     }
 
     Print("is_in_spread_range: ", is_in_spread_range);
@@ -170,10 +168,10 @@ void OnTick()
     {
 
         //--- Define the take profit level for buying
-        take_profit_lvl = current_ask_price - take_profit * _Point;
+        take_profit_lvl = current_bid_price - take_profit * _Point;
 
         //--- Define the stop loss level for buying
-        stop_loss_lvl = current_ask_price + stop_loss * _Point;
+        stop_loss_lvl = current_bid_price + stop_loss * _Point;
 
         //--- Place a sell order
         trade.Sell(lot_size, _Symbol, current_bid_price, stop_loss_lvl, take_profit_lvl);
@@ -190,45 +188,29 @@ void OnTick()
 
 void MarkBuyAndSellLvls()
 {
-    Print("Trade process is now active");
+    Print("Marking buy and sell levels on the chart...");
 
     //--- Define the buy price level
     double buy_price_lvl = SymbolInfoDouble(_Symbol, SYMBOL_ASK) + buy_price_deviation;
 
+    //--- Define the sell price level
     double sell_price_lvl = SymbolInfoDouble(_Symbol, SYMBOL_BID) - sell_price_deviation;
 
     //--- Round the price of levels
     buy_price_lvl = NormalizeDouble(buy_price_lvl, _Digits);
     sell_price_lvl = NormalizeDouble(sell_price_lvl, _Digits);
 
-    // -- Mark all levels for buying
+    // -- Mark price levels for buying on the chart
     ObjectCreate(0, "buy_price_lvl", OBJ_HLINE, 0, 0, buy_price_lvl);
     ObjectSetInteger(0, "buy_price_lvl", OBJPROP_COLOR, clrYellow);
     ObjectSetInteger(0, "buy_price_lvl", OBJPROP_STYLE, STYLE_SOLID);
 
+    // -- Mark price levels for selling on the chart
     ObjectCreate(0, "sell_price_lvl", OBJ_HLINE, 0, 0, sell_price_lvl);
     ObjectSetInteger(0, "sell_price_lvl", OBJPROP_COLOR, clrYellow);
     ObjectSetInteger(0, "sell_price_lvl", OBJPROP_STYLE, STYLE_SOLID);
 
-    // double entry_sell = SymbolInfoDouble(_Symbol,SYMBOL_BID) - entry_sell_buffer;
-    // double tp_sell = entry_sell - tp_points * _Point;
-    // double sl_sell = entry_sell + sl_points * _Point;
-
-    //--- Normalize the entry price, tp and sl
-    // entry_buy = NormalizeDouble(entry_buy,_Digits);
-    // tp_buy = NormalizeDouble(tp_buy,_Digits);
-    // sl_buy = NormalizeDouble(sl_buy,_Digits);
-
-    // entry_sell = NormalizeDouble(entry_sell,_Digits);
-    // tp_sell = NormalizeDouble(tp_sell,_Digits);
-    // sl_sell = NormalizeDouble(sl_sell,_Digits);
-
-    //--- Create a buy and sell pending order
-    // trade.BuyStop(lot_size,entry_buy,_Symbol,sl_buy,tp_buy);
-    // trade.SellStop(lot_size,entry_sell,_Symbol,sl_sell,tp_sell);
-
-    // Print("Return code=",trade.ResultRetcode(), "Code description: ",trade.ResultRetcodeDescription());
-
     Print("buy_price_lvl: ", buy_price_lvl);
     Print("sell_price_lvl: ", sell_price_lvl);
+    Print("Marking buy and sell levels complete");
 }
