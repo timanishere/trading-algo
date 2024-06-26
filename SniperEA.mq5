@@ -31,8 +31,8 @@ double stop_loss_lvl;
 //--- Declare datetime datatype
 datetime
     //--- Set the date and time of when to trigger the EA to mark the levels
-    trigger_start_time = D '2024.06.12 13:29:55',
-    trigger_end_time = D '2024.06.12 13:29:59',
+    trigger_start_time = D'2024.06.12 13:29:55',
+    trigger_end_time = D'2024.06.12 13:29:59',
 
     //--- Initialise a variable for the current time
     current_time;
